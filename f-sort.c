@@ -10,6 +10,9 @@
 //#include <errno.h>
 //#include <semaphore.h>
 
+#define totalsize 6
+#define size 3
+
 int *lttrs;
 int *nums;
 
@@ -22,53 +25,71 @@ void pr(int* arr) {
 			printf("%d ", *(arr+i));
 		}
 	}
-	printf("\n");
+	printf("\n-----------------------------\n");
 }
 
-int sorted(int *arr, int l) {
+int sorted(int *arr) {
 	int x = *arr;
 	int y = *(arr+1);
 	int z = *(arr+2);
-	return (x<y&&y<z)^!l;
+	return (x<=y&&y<=z);
 }
 
-void sort(int* l, int* n) {
-	for (int i=0;i<2;i++) {
-		int x = *(l+i);
-		int y = *(l+i+1);
-		if (x>y) {
-			*(l+i) = y;
-			*(l+i+1) = x;
+void sort(int* l, int* n, int offset) {
+	for (int i=0;i<size-1;i++) {
+		int x = *(n+i+offset);
+		int y = *(n+i+1+offset);
+		if ((isalpha(y)&&!isalpha(x)) || ((x>y)&&(isalpha(y))^!isalpha(x))) {
+			*(n+i+offset) = y;
+			*(n+i+1+offset) = x;
 		}
 	}
-	for (int i=0;i<2;i++) {
-		int x = *(n+i);
-		int y = *(n+i+1);
-		if (x<y) {
-			*(n+i) = y;
-			*(n+i+1) = x;
+	for (int i=0;i<size-1;i++) {
+		int x = *(l+i+offset);
+		int y = *(l+i+1+offset);
+		if (x>y) {
+			*(l+i+offset) = y;
+			*(l+i+1+offset) = x;
+		}
+	}
+}
+
+void exchange(int* lttrs, int* nums, int offset) {
+	for (int i=0;i<size;i++) {
+		int l = *(lttrs+i+offset);
+		int n = *(nums+i+offset);
+		if (!isalpha(l) && isalpha(n)) {
+			*(lttrs+i+offset) = n;
+			*(nums+i+offset) = l;
 		}
 	}
 }
 
 int main(void) {
-	lttrs = malloc(3*sizeof(int));
+	lttrs = malloc(totalsize*sizeof(int));
 	assert(lttrs);
 	*lttrs = 'E';
 	*(lttrs+1) = 4;
 	*(lttrs+2) = 7;
-	nums = malloc(3*sizeof(int));
+	nums = malloc(totalsize*sizeof(int));
 	assert(nums);
 	*nums = 5;
 	*(nums+1) = 'P';
 	*(nums+2) = 'M';
-	while (!(sorted(lttrs,1) && sorted(nums,0))) {
-		pr(lttrs);
+	while (!(sorted(lttrs) && sorted(nums))) {
+		printf("numbers: \n");
 		pr(nums);
-		sort(lttrs,nums);
+		printf("letters: \n");
+		pr(lttrs);
+		sort(lttrs,nums,0);
+		exchange(lttrs,nums,0);
 	}
-	pr(lttrs);
+	//sort(lttrs,nums);
+	//exchange(lttrs,nums);
+	printf("numbers: \n");
 	pr(nums);
+	printf("letters: \n");
+	pr(lttrs);
 	//ltrs  = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
 	//nms  = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
 	//shmdt(ltrs);
