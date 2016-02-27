@@ -3,12 +3,12 @@
 #include <stdio.h>
 #include <assert.h>
 #include <ctype.h>
-//#include <sys/types.h>
-//#include <sys/sem.h>
-//#include <sys/ipc.h>
-//#include <sys/shm.h>
-//#include <errno.h>
-//#include <semaphore.h>
+#include <sys/types.h>
+#include <sys/sem.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <errno.h>
+#include <semaphore.h>
 
 #define totalsize 6
 #define size 3
@@ -66,12 +66,17 @@ void exchange(int* lttrs, int* nums, int offset) {
 }
 
 int main(void) {
-	lttrs = malloc(totalsize*sizeof(int));
+	
+	int l_id = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
+	//lttrs = malloc(totalsize*sizeof(int));
+	lttrs = shmat(l_id,NULL,0);
 	assert(lttrs);
 	*lttrs = 'E';
 	*(lttrs+1) = 4;
 	*(lttrs+2) = 7;
-	nums = malloc(totalsize*sizeof(int));
+	//nums = malloc(totalsize*sizeof(int));
+	int n_id = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
+	nums = shmat(n_id,NULL,0);
 	assert(nums);
 	*nums = 5;
 	*(nums+1) = 'P';
@@ -90,10 +95,10 @@ int main(void) {
 	pr(nums);
 	printf("letters: \n");
 	pr(lttrs);
-	//ltrs  = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
+	//ltrs  = 
 	//nms  = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
-	//shmdt(ltrs);
-	//shmdt(nums);
-	free(lttrs);
-	free(nums);
+	shmdt(lttrs);
+	shmdt(nums);
+	//free(lttrs);
+	//free(nums);
 }
