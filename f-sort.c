@@ -16,11 +16,24 @@
 int *lttrs;
 int *nums;
 
-struct sembuf wait = {0,-1,SEM_UNDO}; //sem_num, sem_op, sem_flg
-struct sembuf unwait = {0,1,SEM_UNDO}; //sem_num, sem_op, sem_flg
+//struct sembuf wait = {0,-1,SEM_UNDO}; //sem_num, sem_op, sem_flg
+//struct sembuf unwait = {0,1,SEM_UNDO}; //sem_num, sem_op, sem_flg
+
+
+void wait(int semid,int i) {
+	printf("locking %d\n", i);
+	struct sembuf s ={i,-1,SEM_UNDO};
+	semop(semid,&s,1);
+}
+
+void unwait(int semid,int i) {
+	printf("unlocking %d\n", i);
+	struct sembuf s ={i,1,SEM_UNDO};
+	semop(semid,&s,1);
+}
 
 void pr(int* arr,int a) {
-	semop(a,&wait,1);
+	//wait(a,0);
 	for (int i=0;i<totalsize;i++) {
 		if (isalpha(*(arr+i))){
 			printf("%c ", *(arr+i));
@@ -30,7 +43,7 @@ void pr(int* arr,int a) {
 		}
 	}
 	printf("\n-----------------------------\n");
-	semop(a,&unwait,1);
+	//unwait(a,0);
 }
 
 int sorted(int *arr) {
@@ -43,41 +56,64 @@ int sorted(int *arr) {
 }
 
 void sort(int* l, int* n, int offset,int a) {
-	semop(a,&wait,1);
+	printf("sorting a thing   %d\n",offset);
 	for (int i=0;i<size-1;i++) {
+		wait(a,i+offset);
+		wait(a,i+offset+1);
 		int x = *(n+i+offset);
 		int y = *(n+i+1+offset);
+		printf("yes\n");
 		if ((isalpha(y)&&!isalpha(x)) || ((x>y)&&(isalpha(y))^!isalpha(x))) {
 			*(n+i+offset) = y;
 			*(n+i+1+offset) = x;
 		}
+		unwait(a,i+offset);
+		unwait(a,i+offset+1);
 	}
 	for (int i=0;i<size-1;i++) {
+		wait(a,i+offset+totalsize);
+		wait(a,i+offset+1+totalsize);
 		int x = *(l+i+offset);
 		int y = *(l+i+1+offset);
 		if (x>y) {
 			*(l+i+offset) = y;
 			*(l+i+1+offset) = x;
 		}
+		unwait(a,i+offset+totalsize);
+		unwait(a,i+offset+1+totalsize);
 	}
-	semop(a,&unwait,1);
 }
 
 void exchange(int* lttrs, int* nums, int offset,int a) {
-	semop(a,&wait,1);
+	printf("exchanging a thing   %d\n",offset);
 	for (int i=0;i<size;i++) {
+		wait(a,i+offset);
+		wait(a,i+offset+totalsize);
 		int l = *(lttrs+i+offset);
 		int n = *(nums+i+offset);
 		if (!isalpha(l) && isalpha(n)) {
 			*(lttrs+i+offset) = n;
 			*(nums+i+offset) = l;
 		}
+		unwait(a,i+offset);
+		unwait(a,i+offset+totalsize);
 	}
-	semop(a,&unwait,1);
 }
 
 void init(int* lttrs, int* nums) {
-	*lttrs = 'E';
+	srand(rand());
+	for (int i=0;i<totalsize;i++) {
+		int j = rand()%2;
+		if (j) {
+			*(lttrs+i) = rand()%10;
+			*(nums+i) = rand()%10+65;
+		}
+		else {
+			*(lttrs+i) =rand()%10+65;
+			*(nums+i) = rand()%10;
+		}
+	}
+	/*lttrs = 'E';
 	*(lttrs+1) = 4;
 	*(lttrs+2) = 7;
 	*(lttrs+3) = 'Y';
@@ -91,22 +127,24 @@ void init(int* lttrs, int* nums) {
 	*(nums+3) = 'M';
 	*(nums+4) = 8;
 	*(nums+5) = 'G';
-	*(nums+6) = 1;
+	*(nums+6) = 1;*/
 }
 
 int main(void) {
-	int l_id = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
+	int l_id = shmget(IPC_PRIVATE, totalsize*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
 	//lttrs = malloc(totalsize*sizeof(int));
 	lttrs = shmat(l_id,NULL,0);
 	assert(lttrs);
 	
 	//nums = malloc(totalsize*sizeof(int));
-	int n_id = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
+	int n_id = shmget(IPC_PRIVATE, totalsize*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
 	nums = shmat(n_id,NULL,0);
 	assert(nums);
 
-	int sem_id = semget(IPC_PRIVATE,1,IPC_CREAT | 0660 |IPC_EXCL);
-	semctl(sem_id,0,SETVAL,1);
+	int sem_id = semget(IPC_PRIVATE,2*totalsize,IPC_CREAT | 0660 |IPC_EXCL);
+	for (int i=0;i<2*totalsize;i++) {
+		semctl(sem_id,i,SETVAL,1);
+	}
 
 	init(lttrs,nums);
 	
@@ -143,20 +181,6 @@ int main(void) {
 			}
 			break;
 	}}
-	/*while (!(sorted(lttrs) && sorted(nums))) {
-		printf("numbers: \n");
-		pr(nums);
-		printf("letters: \n");
-		pr(lttrs);
-		sort(lttrs,nums,0);
-		exchange(lttrs,nums,0);
-		sort(lttrs,nums,2);
-		exchange(lttrs,nums,2);
-		sort(lttrs,nums,4);
-		exchange(lttrs,nums,4);
-	}*/
-	//sort(lttrs,nums);
-	//exchange(lttrs,nums);
 	printf("numbers: \n");
 	pr(nums,sem_id);
 	printf("letters: \n");
