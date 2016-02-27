@@ -25,12 +25,28 @@ void pr(int* arr) {
 	printf("\n");
 }
 
+int sorted(int *arr, int l) {
+	int x = *arr;
+	int y = *(arr+1);
+	int z = *(arr+2);
+	return (x<y&&y<z)^!l;
+}
+
 void sort(int* l, int* n) {
 	for (int i=0;i<2;i++) {
-		if (*(l+i)<*(l+i+1)) {
-			int temp = *(l+i);
-			*(l+i) = *(l+i+1);
-			*(l+i+1) = temp;
+		int x = *(l+i);
+		int y = *(l+i+1);
+		if (x>y) {
+			*(l+i) = y;
+			*(l+i+1) = x;
+		}
+	}
+	for (int i=0;i<2;i++) {
+		int x = *(n+i);
+		int y = *(n+i+1);
+		if (x<y) {
+			*(n+i) = y;
+			*(n+i+1) = x;
 		}
 	}
 }
@@ -39,16 +55,19 @@ int main(void) {
 	lttrs = malloc(3*sizeof(int));
 	assert(lttrs);
 	*lttrs = 'E';
-	*(lttrs+1) = 1;
+	*(lttrs+1) = 4;
 	*(lttrs+2) = 7;
-	pr(lttrs);
-	sort(lttrs,nums);
-	pr(lttrs);
 	nums = malloc(3*sizeof(int));
 	assert(nums);
 	*nums = 5;
 	*(nums+1) = 'P';
 	*(nums+2) = 'M';
+	while (!(sorted(lttrs,1) && sorted(nums,0))) {
+		pr(lttrs);
+		pr(nums);
+		sort(lttrs,nums);
+	}
+	pr(lttrs);
 	pr(nums);
 	//ltrs  = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
 	//nms  = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
