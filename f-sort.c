@@ -10,14 +10,14 @@
 #include <errno.h>
 #include <semaphore.h>
 
-#define totalsize 6
+#define totalsize 7
 #define size 3
 
 int *lttrs;
 int *nums;
 
 void pr(int* arr) {
-	for (int i=0;i<3;i++) {
+	for (int i=0;i<totalsize;i++) {
 		if (isalpha(*(arr+i))){
 			printf("%c ", *(arr+i));
 		}
@@ -29,10 +29,12 @@ void pr(int* arr) {
 }
 
 int sorted(int *arr) {
-	int x = *arr;
-	int y = *(arr+1);
-	int z = *(arr+2);
-	return (x<=y&&y<=z);
+	for (int i=0;i<totalsize-1;i++) {
+		if (*(arr+i)>*(arr+i+1)) {
+			return 0;
+		}
+	}
+	return 1;
 }
 
 void sort(int* l, int* n, int offset) {
@@ -66,7 +68,6 @@ void exchange(int* lttrs, int* nums, int offset) {
 }
 
 int main(void) {
-	
 	int l_id = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
 	//lttrs = malloc(totalsize*sizeof(int));
 	lttrs = shmat(l_id,NULL,0);
@@ -74,6 +75,10 @@ int main(void) {
 	*lttrs = 'E';
 	*(lttrs+1) = 4;
 	*(lttrs+2) = 7;
+	*(lttrs+3) = 'Y';
+	*(lttrs+4) = 3;
+	*(lttrs+5) = 7;
+	*(lttrs+6) = 'A';
 	//nums = malloc(totalsize*sizeof(int));
 	int n_id = shmget(IPC_PRIVATE, 6*sizeof(int), IPC_CREAT | 0600 | IPC_EXCL);
 	nums = shmat(n_id,NULL,0);
@@ -81,6 +86,10 @@ int main(void) {
 	*nums = 5;
 	*(nums+1) = 'P';
 	*(nums+2) = 'M';
+	*(nums+3) = 'M';
+	*(nums+4) = 8;
+	*(nums+5) = 'G';
+	*(nums+6) = 1;
 	while (!(sorted(lttrs) && sorted(nums))) {
 		printf("numbers: \n");
 		pr(nums);
@@ -88,6 +97,10 @@ int main(void) {
 		pr(lttrs);
 		sort(lttrs,nums,0);
 		exchange(lttrs,nums,0);
+		sort(lttrs,nums,2);
+		exchange(lttrs,nums,2);
+		sort(lttrs,nums,4);
+		exchange(lttrs,nums,4);
 	}
 	//sort(lttrs,nums);
 	//exchange(lttrs,nums);
