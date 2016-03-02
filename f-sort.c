@@ -142,41 +142,35 @@ int main(void) {
 		semctl(sem_id,i,SETVAL,1);
 	}
 
-
 	init(lttrs,nums);
 	
-	int first_child = 1;
+	int j;
 	pid_t pid;
 	pid = fork();
-	while (!(sorted(lttrs) && sorted(nums))) {
 	switch (pid) {
 		case -1:
 			break;
 		case 0:
-			if (first_child) {
-				sort(lttrs,nums,0,sem_id);
-				exchange(lttrs,nums,0,sem_id);
-			}
-			else {
-				sort(lttrs,nums,2*(size-1),sem_id);
-				exchange(lttrs,nums,2*(size-1),sem_id);
-			}
+			j = 0;
 			break;
 		default:
-			if (first_child) {
-				pid = fork();
-				first_child = 0;
-			}
-			else {
-				//printf("numbers: \n");
-				//pr(nums);
-				//printf("letters: \n");
-				//pr(lttrs);
-				sort(lttrs,nums,size-1,sem_id);
-				exchange(lttrs,nums,size-1,sem_id);
+			pid = fork();
+			switch(pid) {
+				case -1:
+					break;
+				case 0:
+					j=1;
+					break;
+				default:
+					j=2;
+					break;
 			}
 			break;
-	}}
+	}
+	while (!(sorted(lttrs) && sorted(nums))) {
+		sort(lttrs,nums,j*(size-1),sem_id);
+		exchange(lttrs,nums,j*(size-1),sem_id);
+	}
 	if (pid!=0) {
 		printf("\nAfter sorting:\nNumbers: \n");
 		pr(nums);
