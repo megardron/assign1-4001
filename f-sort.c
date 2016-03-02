@@ -67,7 +67,7 @@ void sort(int* l, int* n, int offset,int sem_id) {
 		wait_sem(sem_id,i+offset+1); //aren't modified by anything else mid-compare.
 		int x = *(n+i+offset);
 		int y = *(n+i+1+offset);
-		if ((isalpha(y)&&!isalpha(x)) || ((x>y)&&(isalpha(y))^!isalpha(x))) {
+		if ((isalpha(y)&&!isalpha(x)) || ((x>y)&&(isalpha(y))^!isalpha(x))) {//if the left is a number and the right is a letter, swap them OR if the left and right are both letters or both numbers and the left is larger than the right
 			*(n+i+offset) = y;
 			*(n+i+1+offset) = x;
 		}
@@ -79,7 +79,7 @@ void sort(int* l, int* n, int offset,int sem_id) {
 		wait_sem(sem_id,i+offset+1+totalsize);
 		int x = *(l+i+offset);
 		int y = *(l+i+1+offset);
-		if (x>y) {
+		if (x>y) { //simpler logic here, numbers are smaller than letters so they filter left automatically
 			*(l+i+offset) = y;
 			*(l+i+1+offset) = x;
 		}
@@ -142,22 +142,22 @@ void init(int* lttrs, int* nums, char* input) {
 		}
 	}
 	else {
-	printf("Input was invalid, using the default arrays.\n");
-	*nums = 5;
-	*(nums+1) = 8;
-	*(nums+2) = 4;
-	*(nums+3) = 'A';
-	*(nums+4) = 6;
-	*(nums+5) = 'C';
-	*(nums+6) = 0;
+		printf("Input was invalid, using the default arrays.\n");
+		*nums = 5;
+		*(nums+1) = 8;
+		*(nums+2) = 4;
+		*(nums+3) = 'A';
+		*(nums+4) = 6;
+		*(nums+5) = 'C';
+		*(nums+6) = 0;
 	
-	*lttrs = 'K';
-	*(lttrs+1) = 'J';
-	*(lttrs+2) = 3;
-	*(lttrs+3) = 'C';
-	*(lttrs+4) = 9;
-	*(lttrs+5) = 'F';
-	*(lttrs+6) = 'B';
+		*lttrs = 'K';
+		*(lttrs+1) = 'J';
+		*(lttrs+2) = 3;
+		*(lttrs+3) = 'C';
+		*(lttrs+4) = 9;
+		*(lttrs+5) = 'F';
+		*(lttrs+6) = 'B';
 	}
 	printf("\nBefore sorting:\nNumbers:\n");
 	pr(nums);
@@ -191,7 +191,7 @@ int main(void) {
 
 	init(lttrs,nums,str);
 	
-	int j;
+	int j; //J is used to determine which of the three processes this is, and thus the parts of the array it is responsible for
 	pid_t pid;
 	pid = fork();
 	switch (pid) {
@@ -214,17 +214,18 @@ int main(void) {
 			}
 			break;
 	}
-	while (!(sorted(lttrs,sem_id,totalsize) && sorted(nums,sem_id,0))) {
+	while (!(sorted(lttrs,sem_id,totalsize) && sorted(nums,sem_id,0))) { //continue until both arrays are completely sorted
 		sort(lttrs,nums,j*(size-1),sem_id);
 		exchange(lttrs,nums,j*(size-1),sem_id);
 	}
 	if (pid!=0) {
+		wait(NULL); //Wait for both children to terminate.
 		wait(NULL);
 		printf("\nAfter sorting:\nNumbers: \n");
 		pr(nums);
 		printf("Letters: \n");
 		pr(lttrs);
-		shmdt(lttrs);
+		shmdt(lttrs); //clean up the shared memory
 		shmdt(nums);
 	}
 	exit(0);
