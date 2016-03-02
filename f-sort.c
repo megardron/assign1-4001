@@ -90,8 +90,40 @@ void exchange(int* lttrs, int* nums, int offset,int sem_id) {
 	}
 }
 
-void init(int* lttrs, int* nums) {
-	
+int sanitize(char* input) {
+	int n = 0;
+	int l = 0;
+	for(int i=0;i<totalsize*2;i++) {
+		int next = *(input+i);
+		printf("\n%d %d\n", i, next);
+		
+		if (isalpha(next)) {
+			printf("alpha\n");
+			l++;
+		}
+		else {if (isdigit(next)) {
+			printf("num\n");
+			*(input+i) = next-'0';
+			n++;
+		}
+		else {
+			printf("false\n");
+			return 0;
+		}}
+	}
+	return (n==l);
+}
+
+void init(int* lttrs, int* nums, char* input) {
+	printf("inside the init   %d\n",*input);
+	if (*input&&sanitize(input)) {
+		for (int i=0;i<totalsize;i++) {
+			printf("%d %d\n", i, *(input+i));
+				*(lttrs+i) = *(input+i);
+				*(nums+i) = *(input+i+totalsize);
+		}
+	}
+	else {
 	*nums = 5;
 	*(nums+1) = 8;
 	*(nums+2) = 4;
@@ -107,6 +139,8 @@ void init(int* lttrs, int* nums) {
 	*(lttrs+4) = 9;
 	*(lttrs+5) = 'F';
 	*(lttrs+6) = 'B';
+	}
+
 
 	
 	/*srand(rand());
@@ -141,8 +175,16 @@ int main(void) {
 	for (int i=0;i<2*totalsize;i++) {
 		semctl(sem_id,i,SETVAL,1);
 	}
+	
+	char str[1000];
+	char* a = str; 
+	
+	printf("Please enter the values to put in the array.\n");
 
-	init(lttrs,nums);
+	scanf("%s",a);
+	printf("%s",a);
+
+	init(lttrs,nums,str);
 	
 	int j;
 	pid_t pid;
