@@ -48,50 +48,68 @@ int sorted(int *arr) {
 	return 1;
 }
 
-void sort(int* l, int* n, int offset,int a) {
+void sort(int* l, int* n, int offset,int sem_id) {
 	for (int i=0;i<size-1;i++) {
-		wait(a,i+offset);
-		wait(a,i+offset+1);
+		wait(sem_id,i+offset);
+		wait(sem_id,i+offset+1);
 		int x = *(n+i+offset);
 		int y = *(n+i+1+offset);
 		if ((isalpha(y)&&!isalpha(x)) || ((x>y)&&(isalpha(y))^!isalpha(x))) {
 			*(n+i+offset) = y;
 			*(n+i+1+offset) = x;
 		}
-		signal(a,i+offset);
-		signal(a,i+offset+1);
+		signal(sem_id,i+offset);
+		signal(sem_id,i+offset+1);
 	}
 	for (int i=0;i<size-1;i++) {
-		wait(a,i+offset+totalsize);
-		wait(a,i+offset+1+totalsize);
+		wait(sem_id,i+offset+totalsize);
+		wait(sem_id,i+offset+1+totalsize);
 		int x = *(l+i+offset);
 		int y = *(l+i+1+offset);
 		if (x>y) {
 			*(l+i+offset) = y;
 			*(l+i+1+offset) = x;
 		}
-		signal(a,i+offset+totalsize);
-		signal(a,i+offset+1+totalsize);
+		signal(sem_id,i+offset+totalsize);
+		signal(sem_id,i+offset+1+totalsize);
 	}
 }
 
-void exchange(int* lttrs, int* nums, int offset,int a) {
+void exchange(int* lttrs, int* nums, int offset,int sem_id) {
 	for (int i=0;i<size;i++) {
-		wait(a,i+offset);
-		wait(a,i+offset+totalsize);
+		wait(sem_id,i+offset);
+		wait(sem_id,i+offset+totalsize);
 		int l = *(lttrs+i+offset);
 		int n = *(nums+i+offset);
 		if (!isalpha(l) && isalpha(n)) {
 			*(lttrs+i+offset) = n;
 			*(nums+i+offset) = l;
 		}
-		signal(a,i+offset);
-		signal(a,i+offset+totalsize);
+		signal(sem_id,i+offset);
+		signal(sem_id,i+offset+totalsize);
 	}
 }
 
 void init(int* lttrs, int* nums) {
-	srand(rand());
+	
+	*nums = 5;
+	*(nums+1) = 8;
+	*(nums+2) = 4;
+	*(nums+3) = 'A';
+	*(nums+4) = 6;
+	*(nums+5) = 'C';
+	*(nums+6) = 0;
+	
+	*lttrs = 'K';
+	*(lttrs+1) = 'J';
+	*(lttrs+2) = 3;
+	*(lttrs+3) = 'C';
+	*(lttrs+4) = 9;
+	*(lttrs+5) = 'F';
+	*(lttrs+6) = 'B';
+
+	
+	/*srand(rand());
 	for (int i=0;i<totalsize;i++) {
 		int j = rand()%2;
 		if (j) {
@@ -102,26 +120,12 @@ void init(int* lttrs, int* nums) {
 			*(lttrs+i) =rand()%26+65;
 			*(nums+i) = rand()%10;
 		}
-	}
+	}*/
 	printf("\nBefore sorting:\nNumbers:\n");
 	pr(nums);
 	printf("Letters:\n");
 	pr(lttrs);
-	/*lttrs = 'E';
-	*(lttrs+1) = 4;
-	*(lttrs+2) = 7;
-	*(lttrs+3) = 'Y';
-	*(lttrs+4) = 3;
-	*(lttrs+5) = 7;
-	*(lttrs+6) = 'A';
-
-	*nums = 5;
-	*(nums+1) = 'P';
-	*(nums+2) = 'M';
-	*(nums+3) = 'M';
-	*(nums+4) = 8;
-	*(nums+5) = 'G';
-	*(nums+6) = 1;*/
+	
 }
 
 int main(void) {
@@ -140,11 +144,6 @@ int main(void) {
 
 
 	init(lttrs,nums);
-
-	//printf("numbers: \n");
-	//pr(nums);
-	//printf("letters: \n");
-	//pr(lttrs);
 	
 	int first_child = 1;
 	pid_t pid;
