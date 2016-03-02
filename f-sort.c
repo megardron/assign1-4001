@@ -94,36 +94,34 @@ int sanitize(char* input) {
 	int n = 0;
 	int l = 0;
 	for(int i=0;i<totalsize*2;i++) {
-		int next = *(input+i);
-		printf("\n%d %d\n", i, next);
-		
+		int next = *(input+i);		
 		if (isalpha(next)) {
-			printf("alpha\n");
 			l++;
 		}
 		else {if (isdigit(next)) {
-			printf("num\n");
 			*(input+i) = next-'0';
 			n++;
 		}
 		else {
-			printf("false\n");
+			printf("A character that is neither a number nor a letter was found. ");
 			return 0;
 		}}
+	}
+	if (n!=l) {
+		printf("The number of letters and numbers was not equal. ");
 	}
 	return (n==l);
 }
 
 void init(int* lttrs, int* nums, char* input) {
-	printf("inside the init   %d\n",*input);
 	if (*input&&sanitize(input)) {
 		for (int i=0;i<totalsize;i++) {
-			printf("%d %d\n", i, *(input+i));
-				*(lttrs+i) = *(input+i);
-				*(nums+i) = *(input+i+totalsize);
+			*(lttrs+i) = *(input+i);
+			*(nums+i) = *(input+i+totalsize);
 		}
 	}
 	else {
+	printf("Input was invalid, using the default arrays.\n");
 	*nums = 5;
 	*(nums+1) = 8;
 	*(nums+2) = 4;
@@ -140,21 +138,6 @@ void init(int* lttrs, int* nums, char* input) {
 	*(lttrs+5) = 'F';
 	*(lttrs+6) = 'B';
 	}
-
-
-	
-	/*srand(rand());
-	for (int i=0;i<totalsize;i++) {
-		int j = rand()%2;
-		if (j) {
-			*(lttrs+i) = rand()%10;
-			*(nums+i) = rand()%26+65;
-		}
-		else {
-			*(lttrs+i) =rand()%26+65;
-			*(nums+i) = rand()%10;
-		}
-	}*/
 	printf("\nBefore sorting:\nNumbers:\n");
 	pr(nums);
 	printf("Letters:\n");
@@ -179,10 +162,11 @@ int main(void) {
 	char str[1000];
 	char* a = str; 
 	
-	printf("Please enter the values to put in the array.\n");
+	printf("Please enter the starting values for the letters array\nPlease note that only the first 7 characters will be considered.\n");
 
 	scanf("%s",a);
-	printf("%s",a);
+	printf("Please enter the starting values for the numbers array\nPlease note that only the first 7 characters will be considered.\n");
+	scanf("%s",a+totalsize);
 
 	init(lttrs,nums,str);
 	
