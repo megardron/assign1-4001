@@ -9,6 +9,7 @@
 #include <sys/shm.h>
 #include <errno.h>
 #include <semaphore.h>
+#include <wait.h>
 
 #define totalsize 7
 #define size 3
@@ -17,15 +18,18 @@ int *lttrs;
 int *nums;
 
 
-void wait(int semid,int i) {
+
+void wait_sem(int semid,int i) {
 	struct sembuf s ={i,-1,SEM_UNDO};
 	semop(semid,&s,1);
 }
 
-void signal(int semid,int i) {
+void signal_sem(int semid,int i) {
 	struct sembuf s ={i,1,SEM_UNDO};
 	semop(semid,&s,1);
 }
+
+/*Utility function to print the arrays. Array is of size totalsize defined above.*/
 
 void pr(int* arr) {
 	for (int i=0;i<totalsize;i++) {
@@ -39,57 +43,68 @@ void pr(int* arr) {
 	printf("\n-----------------------------\n");;
 }
 
-int sorted(int *arr) {
+/*Checks if the array in question is sorted. Offset has a value of either totalsize or 0, to determine how far into the semaphore set you need to go, based on whether the numbers or letters array is being considered. The first totalsize semaphores in the set are for the numbers array, the second for the letters array.*/
+int sorted(int *arr, int sem_id, int offset) {
 	for (int i=0;i<totalsize-1;i++) {
+		wait_sem(sem_id,i+offset);
+		wait_sem(sem_id,i+offset+1);
 		if (*(arr+i)>*(arr+i+1)) {
+			signal_sem(sem_id,i+offset);
+			signal_sem(sem_id,i+offset+1);
 			return 0;
 		}
+		signal_sem(sem_id,i+offset);
+		signal_sem(sem_id,i+offset+1);
 	}
 	return 1;
 }
 
+/*Takes a pointer to each of the two arrays, an offset into the arrays and the id of the semaphore set as arguments.
+Checks the numbers array first, starting from the offset and going size elements. Then does the same for the letters array.*/
 void sort(int* l, int* n, int offset,int sem_id) {
 	for (int i=0;i<size-1;i++) {
-		wait(sem_id,i+offset);
-		wait(sem_id,i+offset+1);
+		wait_sem(sem_id,i+offset); //Lock both elements before doing the comparison so they
+		wait_sem(sem_id,i+offset+1); //aren't modified by anything else mid-compare.
 		int x = *(n+i+offset);
 		int y = *(n+i+1+offset);
 		if ((isalpha(y)&&!isalpha(x)) || ((x>y)&&(isalpha(y))^!isalpha(x))) {
 			*(n+i+offset) = y;
 			*(n+i+1+offset) = x;
 		}
-		signal(sem_id,i+offset);
-		signal(sem_id,i+offset+1);
+		signal_sem(sem_id,i+offset); //Unlock since we're done comparing/switching
+		signal_sem(sem_id,i+offset+1);
 	}
 	for (int i=0;i<size-1;i++) {
-		wait(sem_id,i+offset+totalsize);
-		wait(sem_id,i+offset+1+totalsize);
+		wait_sem(sem_id,i+offset+totalsize);
+		wait_sem(sem_id,i+offset+1+totalsize);
 		int x = *(l+i+offset);
 		int y = *(l+i+1+offset);
 		if (x>y) {
 			*(l+i+offset) = y;
 			*(l+i+1+offset) = x;
 		}
-		signal(sem_id,i+offset+totalsize);
-		signal(sem_id,i+offset+1+totalsize);
+		signal_sem(sem_id,i+offset+totalsize);
+		signal_sem(sem_id,i+offset+1+totalsize);
 	}
 }
 
+/*Exchanges numbers in the letters array with letters in the numbers array provided both occur at the same index.*/
 void exchange(int* lttrs, int* nums, int offset,int sem_id) {
 	for (int i=0;i<size;i++) {
-		wait(sem_id,i+offset);
-		wait(sem_id,i+offset+totalsize);
+		wait_sem(sem_id,i+offset);
+		wait_sem(sem_id,i+offset+totalsize);
 		int l = *(lttrs+i+offset);
 		int n = *(nums+i+offset);
 		if (!isalpha(l) && isalpha(n)) {
 			*(lttrs+i+offset) = n;
 			*(nums+i+offset) = l;
 		}
-		signal(sem_id,i+offset);
-		signal(sem_id,i+offset+totalsize);
+		signal_sem(sem_id,i+offset);
+		signal_sem(sem_id,i+offset+totalsize);
 	}
 }
-
+/*Sanitize checks the input from the user to make sure that every character is either a letter or a number and that there are the same number of number and letters.
+It also changes numbers from their ascii representation into the integer representation.*/
 int sanitize(char* input) {
 	int n = 0;
 	int l = 0;
@@ -103,7 +118,12 @@ int sanitize(char* input) {
 			n++;
 		}
 		else {
-			printf("A character that is neither a number nor a letter was found. ");
+			if (next==0) {
+				printf("Please enter the full 7 characters for each array. ");
+			}
+			else {
+				printf("A character that is neither a number nor a letter was found. ");
+			}
 			return 0;
 		}}
 	}
@@ -113,6 +133,7 @@ int sanitize(char* input) {
 	return (n==l);
 }
 
+/*Initializes the number and letter arrays based on the input given by the user. If the input the arrays are initialized to the values provided in the assignment.*/
 void init(int* lttrs, int* nums, char* input) {
 	if (*input&&sanitize(input)) {
 		for (int i=0;i<totalsize;i++) {
@@ -193,16 +214,18 @@ int main(void) {
 			}
 			break;
 	}
-	while (!(sorted(lttrs) && sorted(nums))) {
+	while (!(sorted(lttrs,sem_id,totalsize) && sorted(nums,sem_id,0))) {
 		sort(lttrs,nums,j*(size-1),sem_id);
 		exchange(lttrs,nums,j*(size-1),sem_id);
 	}
 	if (pid!=0) {
+		wait(NULL);
 		printf("\nAfter sorting:\nNumbers: \n");
 		pr(nums);
 		printf("Letters: \n");
 		pr(lttrs);
+		shmdt(lttrs);
+		shmdt(nums);
 	}
-	shmdt(lttrs);
-	shmdt(nums);
+	exit(0);
 }
