@@ -1,0 +1,64 @@
+Sorting pseudocode - numbers:
+	for i=0 to size of subarray-2
+		lock n[i] and n[i+1]
+		if n[i] is a number and n[i+1] or they're both letters/numbers and n[i] is larger than n[i+1]
+			switch them
+		else do nothing
+		unlock n[i] and n[i+1]
+
+This results in all numbers being to the left of letters within each sub array, it also results in larger number/letters being to the right of smaller numbers/letters.
+
+Sorting pseudocode - letters:
+	for i=0 to size of subarray-2
+		lock l[i] and l[i+1]
+		if l[i] is larger than l[i+1]
+			switch them
+		else do nothing
+		unlock l[i] and l[i+1]
+This results in larger/numbers being to the right of smaller numbers/letters, since we only care about numbers less than 10, we can do this with simpler logic than for numbers, because the value of numbers is smaller than the value of letters.
+
+Exchanging pseudocode:
+	for i=0 to size of subarray-1
+		lock n[i] and l[i]
+		if n[i] is a letter and l[i] is a number
+			switch them
+		else do nothing
+		unlock n[i] and l[i]
+
+Pretty self explanatory.
+
+Checking f sorted pseudocode:
+	for i=0 to size of fullarray
+		lock a[i] and a[i+1]
+		if a[i] is larger than a[i+1]
+			unlock both
+			return 0
+		unlock both
+	return 1
+
+Pretty self explanatory.
+
+main pseudocode
+	create shared memory for both arrays
+	create semaphore set
+	initialize values to 1
+	get input from user for array
+	if input valid
+		put input in arrays
+	else
+		use default array
+	print starting arrays
+	create children with unique value
+	while either array is unsorted
+		each process sorts its sub array
+	children exit, parent waits
+	parent prints final arrays
+	parent cleans up shared memory
+	exit	
+
+
+
+Critical section discussion:
+	1. Mutual exclusion: There are semaphores for each index in each of the two arrays. Before the program even begins to do any of the comparisons it locks both of the values necessary, so that it can be sure that no other processes are reading or writing to that location, ensuring that mutal exclusion is satisfied.
+	2. Progress: If no other process is using the values that the active process needs to do its comparison/etc then it immediately enters the critical section. If they are locked, it will wait for them to be freed, and join the queue, each process will free its semaphores after it has done its comparisons, allowing other processes to enter their critical sections.
+	3. Bounded waiting: Is there a queue in linux semaphore calls? 
