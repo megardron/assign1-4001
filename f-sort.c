@@ -22,7 +22,7 @@ void wait(int semid,int i) {
 	semop(semid,&s,1);
 }
 
-void unwait(int semid,int i) {
+void signal(int semid,int i) {
 	struct sembuf s ={i,1,SEM_UNDO};
 	semop(semid,&s,1);
 }
@@ -58,8 +58,8 @@ void sort(int* l, int* n, int offset,int a) {
 			*(n+i+offset) = y;
 			*(n+i+1+offset) = x;
 		}
-		unwait(a,i+offset);
-		unwait(a,i+offset+1);
+		signal(a,i+offset);
+		signal(a,i+offset+1);
 	}
 	for (int i=0;i<size-1;i++) {
 		wait(a,i+offset+totalsize);
@@ -70,8 +70,8 @@ void sort(int* l, int* n, int offset,int a) {
 			*(l+i+offset) = y;
 			*(l+i+1+offset) = x;
 		}
-		unwait(a,i+offset+totalsize);
-		unwait(a,i+offset+1+totalsize);
+		signal(a,i+offset+totalsize);
+		signal(a,i+offset+1+totalsize);
 	}
 }
 
@@ -85,8 +85,8 @@ void exchange(int* lttrs, int* nums, int offset,int a) {
 			*(lttrs+i+offset) = n;
 			*(nums+i+offset) = l;
 		}
-		unwait(a,i+offset);
-		unwait(a,i+offset+totalsize);
+		signal(a,i+offset);
+		signal(a,i+offset+totalsize);
 	}
 }
 
@@ -103,6 +103,10 @@ void init(int* lttrs, int* nums) {
 			*(nums+i) = rand()%10;
 		}
 	}
+	printf("\nBefore sorting:\nNumbers:\n");
+	pr(nums);
+	printf("Letters:\n");
+	pr(lttrs);
 	/*lttrs = 'E';
 	*(lttrs+1) = 4;
 	*(lttrs+2) = 7;
@@ -137,10 +141,10 @@ int main(void) {
 
 	init(lttrs,nums);
 
-	printf("numbers: \n");
-	pr(nums);
-	printf("letters: \n");
-	pr(lttrs);
+	//printf("numbers: \n");
+	//pr(nums);
+	//printf("letters: \n");
+	//pr(lttrs);
 	
 	int first_child = 1;
 	pid_t pid;
@@ -165,19 +169,19 @@ int main(void) {
 				first_child = 0;
 			}
 			else {
-				printf("numbers: \n");
-				pr(nums);
-				printf("letters: \n");
-				pr(lttrs);
+				//printf("numbers: \n");
+				//pr(nums);
+				//printf("letters: \n");
+				//pr(lttrs);
 				sort(lttrs,nums,size-1,sem_id);
 				exchange(lttrs,nums,size-1,sem_id);
 			}
 			break;
 	}}
 	if (pid!=0) {
-		printf("numbers: \n");
+		printf("\nAfter sorting:\nNumbers: \n");
 		pr(nums);
-		printf("letters: \n");
+		printf("Letters: \n");
 		pr(lttrs);
 	}
 	shmdt(lttrs);
