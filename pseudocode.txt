@@ -6,7 +6,8 @@ Sorting pseudocode - numbers:
 		else do nothing
 		unlock n[i] and n[i+1]
 
-This results in all numbers being to the left of letters within each sub array, it also results in larger number/letters being to the right of smaller numbers/letters.
+Solves the problem because: This results in all numbers being to the left of letters within each sub array, it also results in larger number/letters being to the right of smaller numbers/letters.
+
 
 Sorting pseudocode - letters:
 	for i=0 to size of subarray-2
@@ -15,7 +16,9 @@ Sorting pseudocode - letters:
 			switch them
 		else do nothing
 		unlock l[i] and l[i+1]
-This results in larger/numbers being to the right of smaller numbers/letters, since we only care about numbers less than 10, we can do this with simpler logic than for numbers, because the value of numbers is smaller than the value of letters.
+
+Solves the problem because: This results in larger/numbers being to the right of smaller numbers/letters, since we only care about numbers less than 10, we can do this with simpler logic than for numbers, because the value of numbers is smaller than the value of letters.
+
 
 Exchanging pseudocode:
 	for i=0 to size of subarray-1
@@ -25,7 +28,7 @@ Exchanging pseudocode:
 		else do nothing
 		unlock n[i] and l[i]
 
-Pretty self explanatory.
+This function in the real code, only exchanges elements if both elements at a given index are in the wrong array.
 
 Checking f sorted pseudocode:
 	for i=0 to size of fullarray
@@ -36,7 +39,7 @@ Checking f sorted pseudocode:
 		unlock both
 	return 1
 
-Pretty self explanatory.
+If at any point the array is not sorted, this code will short circuit and return false, otherwise if it makes it to the end it knows that the array is sorted so it returns true. It's important to check the entire array in order to avoid the case where the process thinks its part of the array is sorted, so stops sorting, before the entire array is sorted. In that case another process may move an out of order element into its sub array and it would never notice and finish sorting.
 
 main pseudocode
 	create shared memory for both arrays
@@ -48,17 +51,18 @@ main pseudocode
 	else
 		use default array
 	print starting arrays
-	create children with unique value
+
+	create children with unique value to differentiate
 	while either array is unsorted
 		each process sorts its sub array
 	children exit, parent waits
 	parent prints final arrays
 	parent cleans up shared memory
-	exit	
+	exit
 
 
 
 Critical section discussion:
 	1. Mutual exclusion: There are semaphores for each index in each of the two arrays. Before the program even begins to do any of the comparisons it locks both of the values necessary, so that it can be sure that no other processes are reading or writing to that location, ensuring that mutal exclusion is satisfied.
 	2. Progress: If no other process is using the values that the active process needs to do its comparison/etc then it immediately enters the critical section. If they are locked, it will wait for them to be freed, and join the queue, each process will free its semaphores after it has done its comparisons, allowing other processes to enter their critical sections.
-	3. Bounded waiting: Is there a queue in linux semaphore calls? 
+	3. Bounded waiting: If a process attempts to access an element that has been locked by another process, it will be unable due to the lock. It will wait for the other process to finish doing whatever comparisons and swaps its doing before continuing. The semaphores in linux implement a wait queue, so it is ensured that that process will get a chance to do operations on those elements. The cyclical nature of the sort and exchange algorithms also helps to limit the amount of time that any one process will wait on a single element.

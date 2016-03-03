@@ -103,6 +103,7 @@ void exchange(int* lttrs, int* nums, int offset,int sem_id) {
 		signal_sem(sem_id,i+offset+totalsize);
 	}
 }
+
 /*Sanitize checks the input from the user to make sure that every character is either a letter or a number and that there are the same number of number and letters.
 It also changes numbers from their ascii representation into the integer representation.*/
 int sanitize(char* input) {
@@ -180,7 +181,7 @@ int main(void) {
 		semctl(sem_id,i,SETVAL,1);
 	}
 	
-	char str[1000];
+	char str[1000]; //giant buffer just in case
 	char* a = str; 
 	
 	printf("Please enter the starting values for the letters array\nPlease note that only the first 7 characters will be considered.\n");
@@ -191,7 +192,7 @@ int main(void) {
 
 	init(lttrs,nums,str);
 	
-	int j; //J is used to determine which of the three processes this is, and thus the parts of the array it is responsible for
+	int j; //j is used to determine which of the three processes this is, and thus the parts of the array it is responsible for
 	pid_t pid;
 	pid = fork();
 	switch (pid) {
@@ -227,6 +228,7 @@ int main(void) {
 		pr(lttrs);
 		shmdt(lttrs); //clean up the shared memory
 		shmdt(nums);
+		semctl(sem_id,IPC_RMID,0);
 	}
 	exit(0);
 }
