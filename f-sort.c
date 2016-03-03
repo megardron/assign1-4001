@@ -40,7 +40,7 @@ void pr(int* arr) {
 			printf("%d ", *(arr+i));
 		}
 	}
-	printf("\n-----------------------------\n");;
+	printf("\n-----------------------------\n");
 }
 
 /*Checks if the array in question is sorted. Offset has a value of either totalsize or 0, to determine how far into the semaphore set you need to go, based on whether the numbers or letters array is being considered. The first totalsize semaphores in the set are for the numbers array, the second for the letters array.*/
@@ -60,7 +60,7 @@ int sorted(int *arr, int sem_id, int offset) {
 }
 
 /*Takes a pointer to each of the two arrays, an offset into the arrays and the id of the semaphore set as arguments.
-Checks the numbers array first, starting from the offset and going size elements. Then does the same for the letters array.*/
+Checks the numbers array first, starting from the offset and going "size" elements. Then does the same for the letters array.*/
 void sort(int* l, int* n, int offset,int sem_id) {
 	for (int i=0;i<size-1;i++) {
 		wait_sem(sem_id,i+offset); //Lock both elements before doing the comparison so they
@@ -228,7 +228,7 @@ int main(void) {
 		pr(lttrs);
 		shmdt(lttrs); //clean up the shared memory
 		shmdt(nums);
-		semctl(sem_id,IPC_RMID,0);
+		semctl(sem_id,IPC_RMID,0); //clean up semaphores
 	}
 	exit(0);
 }
